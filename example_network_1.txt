@@ -1,6 +1,5 @@
 [AS1]
 network_address=192.168.1.0/24
-network_name=Madrid
 router_name=R1
 
 [AS2]
