@@ -34,7 +34,8 @@ metric=1
 
 
 [Connection_names_don't matter as long as they are different]
-network_address=10.4.192.0/18
+#You can add coments. For example, check that the next address is a bit different from the rest
+network_address=10.4.192.0/18 
 router_1_name=R3
 router_2_name=R4
 metric=1
