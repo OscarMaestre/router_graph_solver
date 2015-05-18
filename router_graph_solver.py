@@ -4,12 +4,26 @@ import configparser
 import networkx
 import sys
 import ipaddress
-
+import string
+import os
 
 LOGGING_ENABLED = False
 ES="espanol"
 EN="english"
 LANGUAGE=ES
+GRAPH_OUTPUT_FILENAME="network.png"
+
+EXERCISE_TEXT='''
+Ejercicio 1
+============
+
+Dada la red de la figura, en la que se indican los nombres de los routers, las direcciones de las redes y las métricas, crear las tablas de rutas para
+dichos routers. Asignar también direcciones IP a las conexiones entre routers como se especifica.
+
+'''
+
+
+
 #This class is used to store IP addresses used by a router
 #to connect with other routers
 class Router(object):
@@ -190,6 +204,7 @@ def parse_section_as(section):
     return True
     
 def parse_section_with_routers(section):
+    global EXERCISE_TEXT
     try:
         network_address =   section['network_address']
         router_1_name   =   section['router_1_name']
@@ -225,6 +240,7 @@ def parse_section_with_routers(section):
     ip_addr=ipaddress.ip_network(network_address)
     r1.connect_to_router(router_2_name, ip_addr[1])
     r2.connect_to_router(router_1_name, ip_addr[2])
+    EXERCISE_TEXT+="\t* {0} está conectado con {1} mediante la red {2}\n".format(router_1_name, router_2_name, network_address)
     return True
 
 def parse_section(section):
@@ -264,7 +280,24 @@ def create_routing_table(router, graph, networks):
                 route       =   Route ( destination, gateway, int(metric) )
                 
                 router.append_route(route)
-                
+
+
+
+
+def print_graph(graph):
+    text="graph{\n"
+    for edge in graph.edges(data=True):
+        node1=edge[0]
+        node2=edge[1]
+        
+        weight=edge[2]['weight']
+        if weight==0:
+            weight=1
+        text+="\t\"{0}\" -- \"{1}\"  [label={2}] \n".format(node1, node2, weight)
+    text+="}\n"
+    a_file=open("tmp.txt", "w")
+    a_file.write(text)
+    a_file.close()
     
 #Main program
 config=configparser.ConfigParser()
@@ -274,8 +307,13 @@ except IndexError:
     print ("Error:No file given")
     
 graph=networkx.Graph()
+
 networks=[]
 routers=RouterList()
+try:
+    GRAPH_OUTPUT_FILENAME=config['default']['network_graph_filename']
+except KeyError:
+    GRAPH_OUTPUT_FILENAME='network.png'
 
 for key in config:
     #configparser always has a DEFAULT section.
@@ -283,6 +321,14 @@ for key in config:
     if key!="DEFAULT":
         parse_section(config[key])
 
+EXERCISE_TEXT+="\n.. figure:: "+GRAPH_OUTPUT_FILENAME+"\n\n"
+EXERCISE_TEXT+="\n   :width:75%"
+EXERCISE_TEXT+='''
+Solución
+--------
+
+'''
+    
 for router in routers:
     print (router.get_description())
     
@@ -294,3 +340,13 @@ for router in routers:
     
 for route in routers:
     print (route.get_routing_table())
+
+print_graph(graph)
+os.system("neato tmp.txt -Tpng >"+GRAPH_OUTPUT_FILENAME)
+os.system("rm tmp.txt")
+
+
+
+exercise=open("exercise.rst", "w")
+exercise.write(EXERCISE_TEXT)
+exercise.close()
