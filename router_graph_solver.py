@@ -14,11 +14,11 @@ LANGUAGE=ES
 GRAPH_OUTPUT_FILENAME="network.png"
 
 EXERCISE_TEXT='''
-Ejercicio 1
+Ejercicio 
 ============
 
 Dada la red de la figura, en la que se indican los nombres de los routers, las direcciones de las redes y las métricas, crear las tablas de rutas para
-dichos routers. Asignar también direcciones IP a las conexiones entre routers como se especifica.
+dichos routers. Asignar también direcciones IP a las conexiones entre routers como se especifica. No es necesario escribir las redes que los router tienen conectadas directamente.
 
 '''
 
@@ -66,26 +66,32 @@ class Router(object):
         return True
     
     def get_description(self):
-        print("Router "+self.name)
-        text=""
+        text="\nRouter "+self.name+" (direcciones)\n"
+        text+="~~~~~~~~~~~~~~~~\n\n"
+        
         num=len(self.connected_routers)
         for pos in range(0, num):
             r=self.connected_routers[pos]
             addr=self.ip_addresses[pos]
             if LANGUAGE==EN:
-                text=text+self.name+" connected to "+r+" using "+str(addr)+"\n"
+                text+="*" +text+self.name+" connected to "+r+" using "+str(addr)+"\n"
             if LANGUAGE==ES:
-                text=text+self.name+" conectado con "+r+" usando la IP "+str(addr)+"\n"                
+                text+="* " +self.name+" se conectará con "+r+" usando la IP "+str(addr)+"\n"                
         return text
     def get_routing_table(self):
-        if LANGUAGE==EN:
-            print ("Routing table for "+self.name)
-        if LANGUAGE==ES:
-            print ("Tabla de enrutamiento para "+self.name)
         txt=""
+        if LANGUAGE==EN:
+            txt+="Routing table for "+self.name+"\n"
+        if LANGUAGE==ES:
+            txt+="\nTabla de enrutamiento para "+self.name+"\n"
+            txt+="~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~\n\n"
+        txt+= "+----------------------+----------------------+--------------+\n"
+        txt+="| Destino              | Siguiente salto      | Metrica      |\n"
+        txt+= "+======================+======================+==============+\n"
         for route in self.routes:
-            txt+=str(route) + "\n"
-        return txt
+            txt+=route.as_row() + "\n"
+            txt+= "+----------------------+----------------------+--------------+\n"
+        return txt+"\n\n"
     def __str__(self):
         return self.name
     def get_name(self):
@@ -162,6 +168,16 @@ class Route:
             txt+="Destination {} via {} metric {}".format(self.destination, self.via, self.metric)
         if LANGUAGE==ES:
             txt+="Red de destino:{} Siguiente salto: {} metrica:{}".format(self.destination, self.via, self.metric)
+        return txt
+    
+    def as_row(self):
+        txt=""
+        dst="|  " + self.destination.ljust(20, " ")
+        ip=str(self.via)
+        via="|  " + ip.ljust(20, " ")
+        metric=str(self.metric)
+        met="|  " + metric.ljust(12, " ")
+        txt+=dst + via + met +"|"
         return txt
     
 def print_help():
@@ -321,8 +337,10 @@ for key in config:
     if key!="DEFAULT":
         parse_section(config[key])
 
-EXERCISE_TEXT+="\n.. figure:: "+GRAPH_OUTPUT_FILENAME+"\n\n"
-EXERCISE_TEXT+="\n   :width:75%"
+EXERCISE_TEXT+="\n.. figure:: "+GRAPH_OUTPUT_FILENAME+""
+EXERCISE_TEXT+="\n   "
+EXERCISE_TEXT+=":figwidth: 75%"
+EXERCISE_TEXT+="\n   :align: center\n\n"
 EXERCISE_TEXT+='''
 Solución
 --------
@@ -330,7 +348,7 @@ Solución
 '''
     
 for router in routers:
-    print (router.get_description())
+    EXERCISE_TEXT+=router.get_description()
     
 for router in routers:
     #Fill the routing table for "router"
@@ -338,8 +356,9 @@ for router in routers:
     #finding ways to the different networks
     create_routing_table(router, graph, networks)
     
+
 for route in routers:
-    print (route.get_routing_table())
+    EXERCISE_TEXT+=route.get_routing_table()
 
 print_graph(graph)
 os.system("neato tmp.txt -Tpng >"+GRAPH_OUTPUT_FILENAME)
